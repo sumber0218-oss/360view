@@ -1,24 +1,46 @@
-<!DOCTYPE html>
-<html>
-<head>
-<title>Project Title</title>
-<meta charset="utf-8">
-<meta name="viewport" content="target-densitydpi=device-dpi, width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, minimal-ui" />
-<style> @-ms-viewport { width: device-width; } </style>
-<link rel="stylesheet" href="vendor/reset.min.css">
-<link rel="stylesheet" href="style.css">
-</head>
-  <script>
-// --- Marzipano viewer үүсгэсэн хэсгийн доороо энэ кодыг нэмээрэй ---
+// --- index.js ---
 
-// Гар утасны хөдөлгөөн мэдрэгчээр удирдах функц
+// Marzipano viewer үүсгэх
+var viewerOpts = {};
+var viewer = new Marzipano.Viewer(document.getElementById('pano'), viewerOpts);
+
+// Scenes үүсгэх код (жишээ, чиний одоогийн data.js ашиглана)
+var scenes = [];
+
+for (var i = 0; i < data.scenes.length; i++) {
+  var sceneData = data.scenes[i];
+  
+  var source = Marzipano.ImageUrlSource.fromString(sceneData.image);
+  var geometry = new Marzipano.EquirectGeometry([{ width: 4000 }]);
+  var limiter = Marzipano.RectilinearView.limit.traditional(1024, 100*Math.PI/180);
+  var view = new Marzipano.RectilinearView(sceneData.initialView, limiter);
+  
+  var scene = viewer.createScene({
+    source: source,
+    geometry: geometry,
+    view: view,
+    pinFirstLevel: true
+  });
+
+  scenes.push(scene);
+}
+
+// Эхний scene-ийг ачаална
+scenes[0].switchTo();
+
+// --- Scene шилжүүлэх товчуудын event ---
+var sceneElements = document.querySelectorAll('.scene');
+sceneElements.forEach(function(el, idx){
+  el.addEventListener('click', function(){
+    scenes[idx].switchTo();
+  });
+});
+
+// --- Motion sensor (Gyroscope) Control нэмэх ---
 function enableGyroControl(viewer) {
   var controls = viewer.controls();
-
-  // DeviceOrientationControl үүсгэнэ
   var deviceControl = new Marzipano.DeviceOrientationControl();
 
-  // iOS 13-с хойш зөвшөөрөл авах шаардлагатай
   if (typeof DeviceOrientationEvent !== 'undefined' &&
       typeof DeviceOrientationEvent.requestPermission === 'function') {
     
@@ -35,109 +57,18 @@ function enableGyroControl(viewer) {
         if (response === 'granted') {
           controls.addMethod('device', deviceControl);
           controls.enableMethod('device');
-          button.remove(); // зөвшөөрсний дараа товч алга болно
+          button.remove();
         }
       }).catch(console.error);
     });
 
   } else {
-    // Android болон хуучин iOS дээр шууд идэвхжүүлнэ
+    // Android болон хуучин iOS
     controls.addMethod('device', deviceControl);
     controls.enableMethod('device');
   }
 }
-</script>
 
-<body class="multiple-scenes ">
+// Viewer үүссэний дараа Motion Control идэвхжүүлэх
+enableGyroControl(viewer);
 
-<div id="pano"></div>
-
-<div id="sceneList">
-  <ul class="scenes">
-    
-      <a href="javascript:void(0)" class="scene" data-id="0-001">
-        <li class="text">001</li>
-      </a>
-    
-      <a href="javascript:void(0)" class="scene" data-id="1-002">
-        <li class="text">002</li>
-      </a>
-    
-      <a href="javascript:void(0)" class="scene" data-id="2-huwtsas-solih-uruu">
-        <li class="text">huwtsas solih uruu</li>
-      </a>
-    
-      <a href="javascript:void(0)" class="scene" data-id="3-jijig-uruu1">
-        <li class="text">jijig uruu1</li>
-      </a>
-    
-      <a href="javascript:void(0)" class="scene" data-id="4-jijiguruu1">
-        <li class="text">jijiguruu1</li>
-      </a>
-    
-      <a href="javascript:void(0)" class="scene" data-id="5-tomuruu">
-        <li class="text">tomuruu</li>
-      </a>
-    
-      <a href="javascript:void(0)" class="scene" data-id="6-uud">
-        <li class="text">uud</li>
-      </a>
-    
-      <a href="javascript:void(0)" class="scene" data-id="7-uud2">
-        <li class="text">uud2</li>
-      </a>
-    
-      <a href="javascript:void(0)" class="scene" data-id="8-uudgah2">
-        <li class="text">uudgah2</li>
-      </a>
-    
-  </ul>
-</div>
-
-<div id="titleBar">
-  <h1 class="sceneName"></h1>
-</div>
-
-<a href="javascript:void(0)" id="autorotateToggle">
-  <img class="icon off" src="img/play.png">
-  <img class="icon on" src="img/pause.png">
-</a>
-
-<a href="javascript:void(0)" id="fullscreenToggle">
-  <img class="icon off" src="img/fullscreen.png">
-  <img class="icon on" src="img/windowed.png">
-</a>
-
-<a href="javascript:void(0)" id="sceneListToggle">
-  <img class="icon off" src="img/expand.png">
-  <img class="icon on" src="img/collapse.png">
-</a>
-
-<a href="javascript:void(0)" id="viewUp" class="viewControlButton viewControlButton-1">
-  <img class="icon" src="img/up.png">
-</a>
-<a href="javascript:void(0)" id="viewDown" class="viewControlButton viewControlButton-2">
-  <img class="icon" src="img/down.png">
-</a>
-<a href="javascript:void(0)" id="viewLeft" class="viewControlButton viewControlButton-3">
-  <img class="icon" src="img/left.png">
-</a>
-<a href="javascript:void(0)" id="viewRight" class="viewControlButton viewControlButton-4">
-  <img class="icon" src="img/right.png">
-</a>
-<a href="javascript:void(0)" id="viewIn" class="viewControlButton viewControlButton-5">
-  <img class="icon" src="img/plus.png">
-</a>
-<a href="javascript:void(0)" id="viewOut" class="viewControlButton viewControlButton-6">
-  <img class="icon" src="img/minus.png">
-</a>
-
-<script src="vendor/screenfull.min.js" ></script>
-<script src="vendor/bowser.min.js" ></script>
-<script src="vendor/marzipano.js" ></script>
-
-<script src="data.js"></script>
-<script src="index.js"></script>
-
-</body>
-</html>
