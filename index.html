@@ -8,6 +8,46 @@
 <link rel="stylesheet" href="vendor/reset.min.css">
 <link rel="stylesheet" href="style.css">
 </head>
+  <script>
+// --- Marzipano viewer үүсгэсэн хэсгийн доороо энэ кодыг нэмээрэй ---
+
+// Гар утасны хөдөлгөөн мэдрэгчээр удирдах функц
+function enableGyroControl(viewer) {
+  var controls = viewer.controls();
+
+  // DeviceOrientationControl үүсгэнэ
+  var deviceControl = new Marzipano.DeviceOrientationControl();
+
+  // iOS 13-с хойш зөвшөөрөл авах шаардлагатай
+  if (typeof DeviceOrientationEvent !== 'undefined' &&
+      typeof DeviceOrientationEvent.requestPermission === 'function') {
+    
+    var button = document.createElement('button');
+    button.innerHTML = "Enable Motion Control";
+    button.style.position = "absolute";
+    button.style.top = "10px";
+    button.style.left = "10px";
+    button.style.zIndex = 9999;
+    document.body.appendChild(button);
+
+    button.addEventListener('click', function() {
+      DeviceOrientationEvent.requestPermission().then(function(response) {
+        if (response === 'granted') {
+          controls.addMethod('device', deviceControl);
+          controls.enableMethod('device');
+          button.remove(); // зөвшөөрсний дараа товч алга болно
+        }
+      }).catch(console.error);
+    });
+
+  } else {
+    // Android болон хуучин iOS дээр шууд идэвхжүүлнэ
+    controls.addMethod('device', deviceControl);
+    controls.enableMethod('device');
+  }
+}
+</script>
+
 <body class="multiple-scenes ">
 
 <div id="pano"></div>
